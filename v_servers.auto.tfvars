@@ -1,3 +1,4 @@
+# NOT USED.  SAFE TO IGNORE.
 servers = {
   bigip_ple_name        = "ple_bigip_servers"
   vnet = {

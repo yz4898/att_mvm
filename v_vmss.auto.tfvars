@@ -1,6 +1,6 @@
 # VMSS Setup
 vmss = {
-  prefix                      = "mvmltm"
+  prefix                      = "mvmltm"                              # DO NOT CHANGE
   nodes                       = 2
   domain                      = "westus2.cloudapp.azure.com"
   disk                        = "Standard_LRS"
@@ -39,8 +39,8 @@ vmss = {
 ## PAYG Images
   paygo-plan                  = "f5-bigip-virtual-edition-200m-good-hourly"   # sku:     PAYG, 200m, Good
   paygo-sku                   = "f5-bigip-virtual-edition-200m-good-hourly"   # sku:     PAYG, 200m, Good
-  # paygo-plan                  = "f5-bigip-virtual-edition-200m-good-hourly-po-att"
-  # paygo-sku                   = "f5-bigip-virtual-edition-200m-good-hourly-po-att"
+  # paygo-plan                  = "f5-bigip-virtual-edition-200m-good-hourly-po-att"   # sku:     PAYG, 200m, Good, ATT Private Offer
+  # paygo-sku                   = "f5-bigip-virtual-edition-200m-good-hourly-po-att"   # sku:     PAYG, 200m, Good, ATT Private Offer
   paygo-offer                 = "f5-big-ip-good"                              # offer:   PAYG, Good
   paygo-product               = "f5-big-ip-good"                              # offer:   PAYG, Good
 }

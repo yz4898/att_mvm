@@ -1,11 +1,11 @@
 name: F5_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
-# trigger:
-#   - main
+trigger:
+  - main
    
 pool: '25899-vSPAM-DevOps-westus2-AgentPool'
 
 stages:
-- stage: Dev_westus2
+- stage: Dev
   jobs:
   # - job: Build_F5
   #   displayName: Building F5

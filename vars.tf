@@ -1,11 +1,11 @@
 # Input variables for LTM deployment within Azure
 
 variable "subscription_id"  { default = "3af8783d-70df-45ae-ab6f-1c56945e6fe1" }
-variable "lab_prefix"       { default = "bigip-westus2-dev" }
-variable "node_count"       { default = 1 }                 # Number of client and server nodes
+variable "lab_prefix"       { default = "mvmltm-westus2-dev" }
+variable "node_count"       { default = 1 }                 # Number of client and server nodes.  Not used.  Safe to ignore.
 variable "bigip_count"      { default = 2 }                 # Number of BIG-IP VEs to deploy
 variable "use_vmss"         { default = true }
-variable "vnet_cidr"        { default = "10.210.0.0/16" }   # ignore this if using existing vnet
+variable "vnet_cidr"        { default = "10.210.0.0/16" }   # Not used.  Safe to ignore when using existing vnet.
 
 
 # Whether resource-group and virtual-network have already
@@ -27,7 +27,7 @@ locals {
 # customize the following tags with your own values
 locals {
   metadata = {
-    project                 = "bigip"
+    project                 = "mvmltm"
     env                     = "dev"
     attuid                  = "yz4898@att.com"
     created_by              = "yz4898@att.com"

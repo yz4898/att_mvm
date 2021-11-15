@@ -1,6 +1,6 @@
 # Storage details
 storage = {
-  name                    = "mvmltm"
+  name                    = "mvmltm"            # DO NOT CHANGE
   account_tier            = "Standard"
   replication_type        = "LRS"
   account_kind            = "StorageV2"
