@@ -1,0 +1,140 @@
+name: F5_$(SourceBranchName)_$(Date:yyyyMMdd)$(Rev:.r)
+trigger:
+  - main
+
+pool: '25899-vSPAM-DevOps-westus2-AgentPool'
+
+stages:
+- stage: Dev
+  jobs:
+  - job: Build_F5
+    displayName: Building F5
+
+    steps:
+    # Integrate Key Vault with ADO Pipeline so we can use KV secretes for pipeline vars
+    # sp needs access to kv
+    - task: AzureKeyVault@1
+      displayName: Access Key Vault
+      inputs:
+        azureSubscription: '25899-vSPAM-NPRD-ServiceConnection'
+        KeyVaultName: 'dev-25899-westus2-kv'
+        SecretsFilter: '*'
+        RunAsPreJob: false
+  
+    # mapped env vars using kv secretes
+    - bash: |
+        terraform init \
+          -backend-config="storage_account_name=$TF_STATE_BLOB_ACCOUNT_NAME" \
+          -backend-config="container_name=$TF_STATE_BLOB_CONTAINER_NAME" \
+          -backend-config="key=$TF_STATE_BLOB_FILE" \
+          -backend-config="sas_token=$TF_STATE_BLOB_SAS_TOKEN"
+      displayName: Terraform Init
+      env:
+        TF_STATE_BLOB_ACCOUNT_NAME:   $(kv-tf-state-blob-account)
+        TF_STATE_BLOB_CONTAINER_NAME: $(kv-tf-state-blob-container)
+        TF_STATE_BLOB_FILE:           deployment-tfstate
+        TF_STATE_BLOB_SAS_TOKEN:      $(kv-tf-state-sas-token)
+  
+    # yz4898 updated
+    # use SP cred stored as KV secrets
+    - bash: terraform plan -out=deployment.tfplan 
+      displayName: Terraform Plan
+      env:
+        ARM_SUBSCRIPTION_ID: $(kv-arm-subscription-id)
+        ARM_CLIENT_ID:       $(kv-arm-client-id)
+        ARM_CLIENT_SECRET:   $(kv-arm-client-secret)
+        ARM_TENANT_ID:       $(kv-arm-tenant-id)
+
+  - job: waitForValidation
+    displayName: Approval Gate  
+    dependsOn: ['Build_F5']
+    pool: server    
+    timeoutInMinutes: 4320 # job times out in 3 days
+    steps:   
+     - task: ManualValidation@0
+       timeoutInMinutes: 1440 # task times out in 1 day
+       inputs:
+           notifyUsers: |
+              someone@example.com
+           instructions: 'Please validate the build configuration and resume'
+           onTimeout: 'resume'  
+
+  - job: Apply_F5
+    displayName: Commit Deployment
+    dependsOn: ['waitForValidation']
+    steps:
+    - task: AzureKeyVault@1
+      displayName: Access Key Vault
+      inputs:
+        azureSubscription: '25899-vSPAM-NPRD-ServiceConnection'
+        KeyVaultName: 'dev-25899-westus2-kv'
+        SecretsFilter: '*'
+        RunAsPreJob: false
+    
+    # mapped env vars using kv secretes
+    - bash: |
+        terraform init \
+          -backend-config="storage_account_name=$TF_STATE_BLOB_ACCOUNT_NAME" \
+          -backend-config="container_name=$TF_STATE_BLOB_CONTAINER_NAME" \
+          -backend-config="key=$TF_STATE_BLOB_FILE" \
+          -backend-config="sas_token=$TF_STATE_BLOB_SAS_TOKEN"
+      displayName: Terraform Init
+      env:
+        TF_STATE_BLOB_ACCOUNT_NAME:   $(kv-tf-state-blob-account)
+        TF_STATE_BLOB_CONTAINER_NAME: $(kv-tf-state-blob-container)
+        # yz4898 updated
+        # specify tfstate file name: attmvm-tfstate
+        TF_STATE_BLOB_FILE:           deployment-tfstate
+        TF_STATE_BLOB_SAS_TOKEN:      $(kv-tf-state-sas-token)
+    
+    - bash: terraform plan -out=deployment.tfplan
+      displayName: Terraform Plan 
+      env:
+        ARM_SUBSCRIPTION_ID: $(kv-arm-subscription-id)
+        ARM_CLIENT_ID:       $(kv-arm-client-id)
+        ARM_CLIENT_SECRET:   $(kv-arm-client-secret)
+        ARM_TENANT_ID:       $(kv-arm-tenant-id)
+    
+    - bash: terraform apply -auto-approve deployment.tfplan
+      displayName: Terraform Apply
+      env:
+        ARM_SUBSCRIPTION_ID: $(kv-arm-subscription-id)
+        ARM_CLIENT_ID:       $(kv-arm-client-id)
+        ARM_CLIENT_SECRET:   $(kv-arm-client-secret)
+        ARM_TENANT_ID:       $(kv-arm-tenant-id)
+
+  # - job: Destroy
+  #   displayName: Destroy Deployment
+  #   # dependsOn: ['waitForValidation']
+  #   steps:
+  #   - task: AzureKeyVault@1
+  #     displayName: Access Key Vault
+  #     inputs:
+  #       azureSubscription: '25899-vSPAM-NPRD-ServiceConnection'
+  #       KeyVaultName: 'dev-25899-westus2-kv'
+  #       SecretsFilter: '*'
+  #       RunAsPreJob: false
+
+  #   # mapped env vars using kv secretes
+  #   - bash: |
+  #       terraform init \
+  #         -backend-config="storage_account_name=$TF_STATE_BLOB_ACCOUNT_NAME" \
+  #         -backend-config="container_name=$TF_STATE_BLOB_CONTAINER_NAME" \
+  #         -backend-config="key=$TF_STATE_BLOB_FILE" \
+  #         -backend-config="sas_token=$TF_STATE_BLOB_SAS_TOKEN"
+  #     displayName: Terraform Init
+  #     env:
+  #       TF_STATE_BLOB_ACCOUNT_NAME:   $(kv-tf-state-blob-account)
+  #       TF_STATE_BLOB_CONTAINER_NAME: $(kv-tf-state-blob-container)
+  #       # yz4898 updated
+  #       # specify tfstate file name: attmvm-tfstate
+  #       TF_STATE_BLOB_FILE:           deployment-tfstate
+  #       TF_STATE_BLOB_SAS_TOKEN:      $(kv-tf-state-sas-token)
+
+  #   - bash: terraform destroy -auto-approve
+  #     displayName: Terraform Destroy
+  #     env:
+  #       ARM_SUBSCRIPTION_ID: $(kv-arm-subscription-id)
+  #       ARM_CLIENT_ID:       $(kv-arm-client-id)
+  #       ARM_CLIENT_SECRET:   $(kv-arm-client-secret)
+  #       ARM_TENANT_ID:       $(kv-arm-tenant-id)

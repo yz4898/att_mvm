@@ -1,0 +1,31 @@
+ltm pool p01-remote_ssl {
+  members { #p01-remote_ssl-members } 
+}
+
+ltm virtual vs01-clear_to_ssl {
+    destination __VS_ADDR__:80
+    ip-protocol tcp
+    mask 255.255.255.255
+    pool p01-remote_ssl
+    profiles { serverssl-insecure-compatible { context serverside } tcp { } }
+    serverssl-use-sni disabled
+    source 0.0.0.0/0
+    source-address-translation { type automap }
+    translate-address enabled
+    translate-port enabled
+}
+
+ltm virtual vs00-health_check {
+  destination __VS_ADDR__:65000
+  ip-protocol tcp
+  mask 255.255.255.255
+  profiles { http { } tcp { } }
+  rules { healthcheck }
+}
+
+ltm rule healthcheck {
+when HTTP_REQUEST {
+  HTTP::respond 200 -version 1.0
+}
+}
+
