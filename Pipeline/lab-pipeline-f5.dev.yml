@@ -82,9 +82,7 @@ stages:
       env:
         TF_STATE_BLOB_ACCOUNT_NAME:   $(kv-tf-state-blob-account)
         TF_STATE_BLOB_CONTAINER_NAME: $(kv-tf-state-blob-container)
-        # yz4898 updated
-        # specify tfstate file name: attmvm-tfstate
-        TF_STATE_BLOB_FILE:           bigip-westus2-dev-tfstate
+        TF_STATE_BLOB_FILE:           f5-westus2-dev-tfstate
         TF_STATE_BLOB_SAS_TOKEN:      $(kv-tf-state-sas-token)
     
     - bash: terraform plan -out=deployment.tfplan
@@ -126,9 +124,7 @@ stages:
   #     env:
   #       TF_STATE_BLOB_ACCOUNT_NAME:   $(kv-tf-state-blob-account)
   #       TF_STATE_BLOB_CONTAINER_NAME: $(kv-tf-state-blob-container)
-  #       # yz4898 updated
-  #       # specify tfstate file name: attmvm-tfstate
-  #       TF_STATE_BLOB_FILE:           deployment-tfstate
+  #       TF_STATE_BLOB_FILE:           f5-westus2-dev-tfstate
   #       TF_STATE_BLOB_SAS_TOKEN:      $(kv-tf-state-sas-token)
 
   #   - bash: terraform destroy -auto-approve
